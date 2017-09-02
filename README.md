@@ -1,9 +1,12 @@
 # redis-jwt
 
+[![NPM version](https://badge.fury.io/js/redis-jwt.svg)](https://npmjs.org/package/redis-jwt) [![Build Status](https://travis-ci.org/kevoj/redis-jwt.svg?branch=master)](https://travis-ci.org/kevoj/redis-jwt) [![dependencies Status](https://david-dm.org/kevoj/redis-jwt/status.svg)](https://david-dm.org/kevoj/redis-jwt) [![devDependencies Status](https://david-dm.org/kevoj/redis-jwt/dev-status.svg)](https://david-dm.org/kevoj/redis-jwt?type=dev)
+[![GitHub license](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://raw.githubusercontent.com/kevoj/redis-jwt/master/LICENSE)
+
 > Management of sessions by Redis and JWT for horizontal scalability, with the possibility of having one session at a time or multiple for the same user
 
 <a><img src="https://chris.lu/upload/images/redis.png" width="80"></a>
-<a><img src="http://www.techforumist.com/wp-content/uploads/2016/11/introduction_to_json_web_token.png" width="120"></a>
+<a><img src="https://cdn.auth0.com/blog/jwtalgos/logo.png" width="80"></a>
 
 ## Requirements
 
@@ -41,20 +44,60 @@ const r = new RedisJWT({
 	KEA: true // Enable notify-keyspace-events KEA
 });
 
+// Sign
+r.sign('507f191e810c19729de860ea').then(token => {
+	//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+	// Verify
+	r.verify(token).then(result => {
+		// object redis-jwt
+	}).catch(err => {
+		// Wrong token
+	});
+
+});
+
+```
+
+### Example with Express (Routers + Middleware)
+
+```javascript
+
+import RedisJWT from 'redis-jwt';
+const r = new RedisJWT();
 import express from 'express';
 const app = express();
 
+// Router Login
 app.get('/login', (req, res) => {
 	// Create a new token with redis-jwt
-	r.create(req, 'id_user').then(token => {
-    	// return token to client (save token in cookie,localstorage,etc)
+	r.sign('507f191e810c19729de860ea', { ttl: '15m', data: { hello: 'world' }, request: req }).then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 		res.json({token});
   	});
 });
 
-// Get me
+// Router Me
 app.get('/me', mw(), (req, res) => {
-	// returns the current user associated with the token
+	/*
+	req.user
+	{
+		name: 'led',
+		lastname: 'zeppelin',
+		"rjwt": {
+			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"iat": 1504334208,
+			"id": "507f191e810c19729de860ea",
+			"ttl": 900,
+			"value": {
+				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+				"_agent": "Mozilla/5.0...",
+				"_ip": "127.0.0.1",
+				"hello": "world"
+			}
+		}
+	}
+	*/
 	res.json(req.user);
 });
 
@@ -64,9 +107,25 @@ function mw() {
   	// Extract token from header "authorization" (sent from the client)
  	const token = req.headers['authorization']; 
 	// Verify token with redis-jwt
- 	r.verify(token).then(session => {
-    	// if all ok save session
-    	req.user = {name: 'led', lastname: 'zeppelin' ,{session}};
+ 	r.verify(token).then(rjwt => {
+		/*
+		rjwt
+		{
+			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"iat": 1504334208,
+			"id": "507f191e810c19729de860ea",
+			"ttl": 900,
+			"value": {
+				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+				"_agent": "Mozilla/5.0 (X11; Linux x86_64) ...",
+				"_ip": "127.0.0.1",
+				"hello": "world"
+			}
+		}
+		*/
+
+		// At this point you can query a user for a database, for example filter by rjwt.id
+    	req.user = {name: 'led', lastname: 'zeppelin' ,{rjwt}};
         next();
   	}).catch(err => {
   		res.status(401).json({err})
@@ -82,43 +141,74 @@ app.listen(3000, () => {
 
 ## Options
 
-### Create
+### Sign
 
 ```javascript
 
-	// Simple
+	// Basic
+	r.sign('507f191e810c19729de860ea').then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  	});
 
-	r.create(req, 'id_user').then(token => {
-		res.json({token});
+    // With TTL: 1d, 10h, 2.5 hrs, 2h, 1m, 5s, 1y
+    r.sign('507f191e810c19729de860ea', { ttl: '15m' }).then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
     
-    // With data
-    
-    r.create(req, 'id_user',{hello:'world'}).then(token => {
-		res.json({token});
+    // With Data: with "data" object are saved in redis-jwt
+    r.sign('507f191e810c19729de860ea', { data: { hello: 'world' }}).then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  	});
+
+	// With Request: with "request" the client agent and ip are saved in redis-jwt
+    r.sign('507f191e810c19729de860ea', { request: req }).then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
     
-    // With TTL
-    
-    r.create(req, 'id_user', 5000).then(token => {
-		res.json({token});
-  	});
-    
-    // With data + TTL
-    
-    r.create(req, 'id_user', {hello:'world'}, 5000).then(token => {
-		res.json({token});
+    // With TTL + Data + Request
+    r.sign('507f191e810c19729de860ea', { ttl: '15m', data: { hello: 'world' }, request: req }).then(token => {
+		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
          
 ```
 
 ### Verify
 
-
 ```javascript
 
+	// Basic
 	r.verify(token).then(result => {
-    	// Token ok
+		/*
+		result
+		{
+			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"iat": 1504334208,
+			"id": "507f191e810c19729de860ea",
+			"ttl": 60
+		}
+		*/
+  	}).catch(err => {
+		// Wrong token
+  	})
+
+	// Value from redis
+	r.verify(token, true).then(result => {
+		/*
+		result
+		{
+			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"iat": 1504334208,
+			"id": "507f191e810c19729de860ea",
+			"ttl": 60,
+			"value": {
+				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+				"_agent": "Mozilla/5.0 (X11; Linux x86_64)...",
+				"_ip": "::1",
+				"hello": "world"
+			}
+		}
+		*/
+
   	}).catch(err => {
 		// Wrong token
   	})
@@ -129,12 +219,17 @@ app.listen(3000, () => {
 
 ```javascript
 
-	// Native comands to redis
+	// Execute Redis comands
 	var exec = r.exec();
     
 	exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, result) => {
-		// all the keys with the search pattern
-    	console.log(result);
+		/*
+		result
+		[
+			"507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"507f191e810c19729de860ea:d39K8J249Hd",
+		]
+		*/
 	});
 
 ```
@@ -143,12 +238,17 @@ app.listen(3000, () => {
 
 ```javascript
 
+	// Method's redis-jwt
 	var call = r.call();
     	
-    // Example
+	// Example
 	call.getValuesByPattern('507f191e810c19729de860ea').then(result => {
-		// all the keys with the search pattern
-    	console.log(result);
+		/*
+		result
+		[
+			"{\"_key\":\"507f191e810c19729de860ea:ZYYlwOGqTmx\",\"_agent\":\"Mozilla/5.0..."
+		]
+		*/
 	})
       
     // Test Ping
