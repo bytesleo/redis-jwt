@@ -19,23 +19,23 @@ var app = express();
 app.get('/', function (req, res) {
 
 	// Create
-	r.create(req, '507f191e810c19729de860ea', 50000).then(createResult => {
+	r.sign('507f191e810c19729de860ea', { ttl: '1m', data: { hello: 'world' }, request: req }).then(sign => {
 
 		// Verify
-		r.verify(createResult).then(verifyResult => {
+		r.verify(sign, true).then(verify => {
 
 			// Exec
-			var exec = r.exec();
+			var rexec = r.exec();
 
-			exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, execResult) => {
+			rexec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, exec) => {
 
 				// Call
-				var call = r.call();
+				var rcall = r.call();
 
-				call.getValuesByPattern('507f191e810c19729de860ea').then(callResult => {
+				rcall.getValuesByPattern('507f191e810c19729de860ea').then(call => {
 
-					console.log({ createResult, verifyResult, execResult, callResult });
-					res.json({ createResult, verifyResult, execResult, callResult });
+					console.log({ sign, verify, exec, call });
+					res.json({ sign, verify, exec, call });
 				})
 
 			});
