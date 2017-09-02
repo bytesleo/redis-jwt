@@ -72,7 +72,7 @@ const app = express();
 app.get('/login', (req, res) => {
 	// Create a new token with redis-jwt
 	r.sign('507f191e810c19729de860ea', { ttl: '15m', data: { hello: 'world' }, request: req }).then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+		// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 		res.json({token});
   	});
 });
@@ -301,7 +301,6 @@ app.listen(3000, () => {
 ### Test
 
 `npm test`
-
 
 ## License
 
