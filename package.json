@@ -1,6 +1,6 @@
 {
     "name": "redis-jwt",
-    "version": "1.0.5",
+    "version": "1.0.7",
     "description": "Management of sessions by Redis and JWT for horizontal scalability, with the possibility of having one session at a time or multiple for the same user",
     "main": "dist/index.js",
     "repository": {
@@ -8,8 +8,8 @@
         "url": "git+https://github.com/kevoj/redis-jwt.git"
     },
     "scripts": {
-        "start": "nodemon lib/index.js --exec babel-node",
-        "build": "babel lib -d dist",
+        "start": "nodemon src/index.js --exec babel-node",
+        "build": "babel src -d dist",
         "serve": "npm run build && node index.js",
         "test": "mocha --compilers js:babel-register"
     },
@@ -45,6 +45,7 @@
     "dependencies": {
         "chalk": "^2.1.0",
         "jsonwebtoken": "^7.4.3",
+        "ms": "^2.0.0",
         "redis-fast-driver": "^1.0.5",
         "shelljs": "^0.7.8"
     }
