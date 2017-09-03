@@ -13,6 +13,7 @@ class Jwt {
         this.secret = secret;
     }
 
+    // sign token
     async sign(rjwt) {
         try {
             return await jwt.sign({
@@ -24,6 +25,7 @@ class Jwt {
 
     }
 
+    // verify token
     async verify(token) {
         try {
             return jwt.verify(token, this.secret);
@@ -42,7 +44,16 @@ class Driver {
     constructor(config) {
         this.config = config;
         this.r = new Redis(this.config);
-        this.events();
+
+        let self = this;
+        setTimeout(() => {
+            self.ping().then(result => {
+                if (!result) {
+                    console.log(chalk.redBright(`redis-jwt-> Could not establish a connection`));
+                    throw 'Error';
+                }
+            });
+        }, 2000);
     }
 
     // Return instance
@@ -51,39 +62,13 @@ class Driver {
     }
 
     // Events
-    events() {
-
-        const uri = `${this.config.host}:${this.config.port}/${this.config.db}`;
-
-        this.r.on('ready', () => {
-            console.log(chalk.greenBright(`-------\nRedis[${this.config.name}]-> connected on ${uri}\n-------`));
-        });
-
-        // //happen each time when reconnected
-        this.r.on('connected', () => {
-            // console.log('redis connected');
-        });
-
-        this.r.on('disconnected', () => {
-            console.log(chalk.redBright(`Redis[${this.config.name}]-> disconnected: ${uri}`));
-        });
-
-        this.r.on('error', (err) => {
-            console.log(chalk.redBright(`Redis[${this.config.name}]-> error: ${uri} - detail: ${err}`));
-        });
-
-        setTimeout(() => {
-            this.ping();
-        }, 2000);
-
+    on(event, cb) {
+        return this.r.on(event, cb);
     }
 
     // Test Ping
     async ping() {
-        if (!await this.r.rawCall(['ping'])) {
-            console.log(chalk.redBright(`Redis[${name}]-> Could not establish a connection: ${uri}`));
-            process.exit(-1);
-        }
+        return await this.r.rawCall(['ping']);
     }
 
     // Create
@@ -224,7 +209,7 @@ class RedisJwt {
     constructor(config) {
 
         // Enable notify-keyspace-events
-        if (config.KEA) {
+        if (config.kea) {
             if (shell.exec('redis-cli config set notify-keyspace-events KEA').code !== 0) {
                 shell.echo('Error: notify-keyspace-events KEA failed');
                 shell.exit(1);
@@ -243,8 +228,10 @@ class RedisJwt {
         this.config.multiple = !config.multiple ? false : true;
 
         // instances
+
         this.d = new Driver(this.config);
         this.j = new Jwt(this.config.secret);
+
     }
 
     // Create a new token
@@ -332,6 +319,12 @@ class RedisJwt {
             throw chalk.redBright(err);
         }
 
+    }
+    // method's
+
+    // Events
+    on(event, cb) {
+        return this.d.on(event, cb);
     }
 
     // return instance to Driver (access method's) -> this.r.method
