@@ -41,91 +41,54 @@ const r = new RedisJWT({
 	db: 0, //optional db selection
 	secret: 'secret_key', // secret key for Tokens!
 	multiple: false, // single or multiple sessions by user
-	KEA: true // Enable notify-keyspace-events KEA
+	kea: true // Enable notify-keyspace-events KEA
 });
 
 // Sign
 r.sign('507f191e810c19729de860ea').then(token => {
-	//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-	// Verify
 	r.verify(token).then(result => {
 		// object redis-jwt
 	}).catch(err => {
 		// Wrong token
 	});
-
 });
 
 ```
-
-### Example with Express (Routers + Middleware)
+### Example Redis-jwt with Express
 
 ```javascript
 
 import RedisJWT from 'redis-jwt';
-const r = new RedisJWT();
 import express from 'express';
+const r = new RedisJWT();
 const app = express();
 
-// Router Login
+// Login
 app.get('/login', (req, res) => {
-	// Create a new token with redis-jwt
-	r.sign('507f191e810c19729de860ea', { ttl: '15m', data: { hello: 'world' }, request: req }).then(token => {
-		// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+	r.sign('507f191e810c19729de860ea', { 
+    	ttl: '15m',
+    	data: { hello: 'world' }, 
+    	request: req 
+    }).then(token => {
 		res.json({token});
   	});
 });
 
-// Router Me
+// Me
 app.get('/me', mw(), (req, res) => {
-	/*
-	req.user
-	{
-		name: 'led',
-		lastname: 'zeppelin',
-		"rjwt": {
-			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
-			"iat": 1504334208,
-			"id": "507f191e810c19729de860ea",
-			"ttl": 900,
-			"value": {
-				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
-				"_agent": "Mozilla/5.0...",
-				"_ip": "127.0.0.1",
-				"hello": "world"
-			}
-		}
-	}
-	*/
 	res.json(req.user);
 });
 
 // Middleware
 function mw() {
   return (req, res, next) => {
-  	// Extract token from header "authorization" (sent from the client)
  	const token = req.headers['authorization']; 
-	// Verify token with redis-jwt
- 	r.verify(token).then(rjwt => {
-		/*
-		rjwt
-		{
-			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
-			"iat": 1504334208,
-			"id": "507f191e810c19729de860ea",
-			"ttl": 900,
-			"value": {
-				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
-				"_agent": "Mozilla/5.0 (X11; Linux x86_64) ...",
-				"_ip": "127.0.0.1",
-				"hello": "world"
-			}
-		}
-		*/
-
-		// At this point you can query a user for a database, for example filter by rjwt.id
-    	req.user = {name: 'led', lastname: 'zeppelin' ,{rjwt}};
+ 	r.verify(token).then(rjwt => 
+        /* 
+        At this point you can consult the database by 
+        the user id to save the information along with the session
+        */
+	    req.user = rjwt;
         next();
   	}).catch(err => {
   		res.status(401).json({err})
@@ -133,8 +96,31 @@ function mw() {
   }
 }
 
-app.listen(3000, () => {
-    console.log('Server listening on port 3000!');
+app.listen(3000, () => console.log('Server listening on port 3000!'));
+
+```
+## Events
+
+```javascript
+
+// Ready
+r.on('ready', () => {
+	console.log('redis-jwt-> ready!');
+});
+
+// connected
+r.on('connected', () => {
+	console.log('redis-jwt-> connected!');
+});
+
+// disconnected
+r.on('disconnected', () => {
+	console.log('redis-jwt-> disconnected!');
+});
+
+// error
+r.on('error', (err) => {
+	console.log('redis-jwt-> error!', err);
 });
 
 ```
@@ -145,28 +131,51 @@ app.listen(3000, () => {
 
 ```javascript
 
-	// Basic
+	/*
+    Basic
+    */
 	r.sign('507f191e810c19729de860ea').then(token => {
 		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
 
-    // With TTL: 1d, 10h, 2.5 hrs, 2h, 1m, 5s, 1y
-    r.sign('507f191e810c19729de860ea', { ttl: '15m' }).then(token => {
+    /*
+    TTL
+    Example: 1d, 10h, 2.5 hrs, 2h, 1m, 5s, 1y
+    */
+    r.sign('507f191e810c19729de860ea', { 
+    	ttl: '15m' 
+    }).then(token => {
 		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
     
-    // With Data: with "data" object are saved in redis-jwt
-    r.sign('507f191e810c19729de860ea', { data: { hello: 'world' }}).then(token => {
+    /*
+    Data
+    Object are saved in redis-jwt
+    */
+    r.sign('507f191e810c19729de860ea', { 
+    	data: { hello: 'world' }
+    }).then(token => {
 		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
 
-	// With Request: with "request" the client agent and ip are saved in redis-jwt
-    r.sign('507f191e810c19729de860ea', { request: req }).then(token => {
+	/* 
+    Request
+    request are saved in redis-jwt (ip,agent)
+    */
+    r.sign('507f191e810c19729de860ea', { 
+    	request: req 
+    }).then(token => {
 		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
     
-    // With TTL + Data + Request
-    r.sign('507f191e810c19729de860ea', { ttl: '15m', data: { hello: 'world' }, request: req }).then(token => {
+    /*
+    Example TTL + Data + Request
+    */
+    r.sign('507f191e810c19729de860ea', { 
+    	ttl: '15m', 
+        data: { hello: 'world' }, 
+        request: req 
+    }).then(token => {
 		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
   	});
          
@@ -176,10 +185,11 @@ app.listen(3000, () => {
 
 ```javascript
 
-	// Basic
+	/*
+    Basic
+    */
 	r.verify(token).then(result => {
 		/*
-		result
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
 			"iat": 1504334208,
@@ -191,10 +201,11 @@ app.listen(3000, () => {
 		// Wrong token
   	})
 
-	// Value from redis
+	/*
+    with values (TTL + Data + Request)
+    */
 	r.verify(token, true).then(result => {
 		/*
-		result
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
 			"iat": 1504334208,
@@ -208,7 +219,6 @@ app.listen(3000, () => {
 			}
 		}
 		*/
-
   	}).catch(err => {
 		// Wrong token
   	})
@@ -224,7 +234,6 @@ app.listen(3000, () => {
     
 	exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, result) => {
 		/*
-		result
 		[
 			"507f191e810c19729de860ea:ZYYlwOGqTmx",
 			"507f191e810c19729de860ea:d39K8J249Hd",
@@ -240,46 +249,36 @@ app.listen(3000, () => {
 
 	// Method's redis-jwt
 	var call = r.call();
-    	
-	// Example
-	call.getValuesByPattern('507f191e810c19729de860ea').then(result => {
-		/*
-		result
-		[
-			"{\"_key\":\"507f191e810c19729de860ea:ZYYlwOGqTmx\",\"_agent\":\"Mozilla/5.0..."
-		]
-		*/
-	})
-      
+    	      
     // Test Ping
-    call.ping()..
+    call.ping().then..
     
      // Create
-    call.create(key, value, ttl)..
+    call.create(key, value, ttl).then..
     
     // exits by key
-    call.exists(key)..
+    call.exists(key).then..
     
     // Get ttl by Key
-    call.ttl(key)..
+    call.ttl(key).then..
     
     // Get values by key
-    call.getValueByKey(key)..
+    call.getValueByKey(key).then..
     
     // Get values by Pattern
-    call.getValuesByPattern(pattern)..
+    call.getValuesByPattern(pattern).then..
     
     // Get count by Pattern
-    call.getCountByPattern(pattern)..
+    call.getCountByPattern(pattern).then..
     
     // Get info
-    call.getInfo(section)..
+    call.getInfo(section).then..
     
     // Destroy by key
-    call.destroy(key)..
+    call.destroy(key).then..
     
     // Destroy multiple by key
-    call.destroyMultiple(key)..
+    call.destroyMultiple(key).then..
     
 
 ```
