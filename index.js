@@ -9,8 +9,28 @@ var r = new RedisJWT({
 	db: 0, //optional db selection
 	secret: 'secret_key', // secret key for Tokens!
 	multiple: false, // single or multiple sessions by user
-	KEA: true // Enable notify-keyspace-events KEA
+	kea: true // Enable notify-keyspace-events KEA
 });
+
+
+// Events
+
+r.on('ready', () => {
+	console.log('redis-jwt-> ready!');
+});
+
+r.on('connected', () => {
+	console.log('redis-jwt-> connected!');
+});
+
+r.on('disconnected', () => {
+	console.log('redis-jwt-> disconnected!');
+});
+
+r.on('error', (err) => {
+	console.log('redis-jwt-> error!', err);
+});
+
 
 var express = require('express');
 
