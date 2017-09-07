@@ -44,7 +44,6 @@ const r = new RedisJWT({
 	kea: true // Enable notify-keyspace-events KEA
 });
 
-// Sign
 r.sign('507f191e810c19729de860ea').then(token => {
 	r.verify(token).then(result => {
 		// object redis-jwt
@@ -65,10 +64,13 @@ const app = express();
 
 // Login
 app.get('/login', (req, res) => {
-	r.sign('507f191e810c19729de860ea', { 
-    	ttl: '15m',
-    	data: { hello: 'world' }, 
-    	request: req 
+	r.sign('507f191e810c19729de860ea', {
+    	ttl: '15 minutes',
+    	data: {
+			redis: {hello: 'world'},
+			token: {world: 'hello'},
+    		request: req
+		},
     }).then(token => {
 		res.json({token});
   	});
@@ -82,12 +84,9 @@ app.get('/me', mw(), (req, res) => {
 // Middleware
 function mw() {
   return (req, res, next) => {
- 	const token = req.headers['authorization']; 
- 	r.verify(token).then(rjwt => 
-        /* 
-        At this point you can consult the database by 
-        the user id to save the information along with the session
-        */
+ 	const token = req.headers['authorization'];
+	r.verify(token).then(rjwt =>
+		// here you can get user from DB by id (rjwt.id)
 	    req.user = rjwt;
         next();
   	}).catch(err => {
@@ -99,31 +98,6 @@ function mw() {
 app.listen(3000, () => console.log('Server listening on port 3000!'));
 
 ```
-## Events
-
-```javascript
-
-// Ready
-r.on('ready', () => {
-	console.log('redis-jwt-> ready!');
-});
-
-// connected
-r.on('connected', () => {
-	console.log('redis-jwt-> connected!');
-});
-
-// disconnected
-r.on('disconnected', () => {
-	console.log('redis-jwt-> disconnected!');
-});
-
-// error
-r.on('error', (err) => {
-	console.log('redis-jwt-> error!', err);
-});
-
-```
 
 ## Options
 
@@ -131,64 +105,53 @@ r.on('error', (err) => {
 
 ```javascript
 
-	/*
-    Basic
-    */
-	r.sign('507f191e810c19729de860ea').then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  	});
+	//	Basic
+	r.sign('507f191e810c19729de860ea').then..
 
-    /*
-    TTL
-    Example: 1d, 10h, 2.5 hrs, 2h, 1m, 5s, 1y
-    */
-    r.sign('507f191e810c19729de860ea', { 
-    	ttl: '15m' 
-    }).then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  	});
-    
-    /*
-    Data
-    Object are saved in redis-jwt
-    */
-    r.sign('507f191e810c19729de860ea', { 
-    	data: { hello: 'world' }
-    }).then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  	});
+    //	TTL : 50 seconds, 15 minutes, 5 hours, 3 days, 1 year ...
+    r.sign('507f191e810c19729de860ea', {
+    	ttl: '15 minutes'
+    }).then...
 
-	/* 
-    Request
-    request are saved in redis-jwt (ip,agent)
-    */
-    r.sign('507f191e810c19729de860ea', { 
-    	request: req 
-    }).then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  	});
-    
-    /*
-    Example TTL + Data + Request
-    */
-    r.sign('507f191e810c19729de860ea', { 
-    	ttl: '15m', 
-        data: { hello: 'world' }, 
-        request: req 
-    }).then(token => {
-		//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-  	});
-         
+    // Save data in redis : Object are saved in redis-jwt
+    r.sign('507f191e810c19729de860ea', {
+    	data: {
+			redis: {hello: 'world'}
+		}
+    }).then...
+
+    // Save data in token : Object are saved in token
+    r.sign('507f191e810c19729de860ea', {
+    	data: {
+			token: {world: 'hello'}
+		}
+    }).then...
+
+	// Request : request are saved in redis-jwt (ip,agent)
+    r.sign('507f191e810c19729de860ea', {
+    	data: {
+			request: req
+		}
+    }).then...
+
+    // Example TTL + Data + Request
+    r.sign('507f191e810c19729de860ea', {
+    	ttl: '15 minutes',
+    	data: {
+			redis: {hello: 'world'},
+			token: {world: 'hello'},
+    		request: req
+		}
+    }).then...
+
 ```
 
 ### Verify
 
 ```javascript
 
-	/*
-    Basic
-    */
-	r.verify(token).then(result => {
+	// Basic
+	r.verify(token).then(decode => {
 		/*
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
@@ -201,10 +164,8 @@ r.on('error', (err) => {
 		// Wrong token
   	})
 
-	/*
-    with values (TTL + Data + Request)
-    */
-	r.verify(token, true).then(result => {
+	//	with values (TTL + Data + Request)
+	r.verify(token, true).then(decode => {
 		/*
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
@@ -230,7 +191,7 @@ r.on('error', (err) => {
 ```javascript
 
 	// Execute Redis comands
-	var exec = r.exec();
+	const exec = r.exec();
     
 	exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, result) => {
 		/*
@@ -248,8 +209,8 @@ r.on('error', (err) => {
 ```javascript
 
 	// Method's redis-jwt
-	var call = r.call();
-    	      
+	const call = r.call();
+
     // Test Ping
     call.ping().then..
     
@@ -280,6 +241,32 @@ r.on('error', (err) => {
     // Destroy multiple by key
     call.destroyMultiple(key).then..
     
+
+```
+
+## Events
+
+```javascript
+
+// Ready
+r.on('ready', () => {
+	console.log('redis-jwt-> ready!');
+});
+
+// connected
+r.on('connected', () => {
+	console.log('redis-jwt-> connected!');
+});
+
+// disconnected
+r.on('disconnected', () => {
+	console.log('redis-jwt-> disconnected!');
+});
+
+// error
+r.on('error', (err) => {
+	console.log('redis-jwt-> error!', err);
+});
 
 ```
 
