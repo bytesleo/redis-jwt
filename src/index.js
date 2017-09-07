@@ -14,11 +14,16 @@ class Jwt {
     }
 
     // sign token
-    async sign(rjwt) {
+    async sign(rjwt, data) {
+
+        let value = { rjwt };
+
+        if (data) {
+            Object.assign(value, { data: { token: data } });
+        }
+
         try {
-            return await jwt.sign({
-                rjwt
-            }, this.secret);
+            return await jwt.sign(value, this.secret);
         } catch (err) {
             throw 'redis-jwt->  Error creating token...';
         }
@@ -243,6 +248,7 @@ class RedisJwt {
             let key = `${_id}:${this.makeid(11)}`;
             let _ttl = null;
             let session = { _key: key };
+            let dataToken = null;
 
             if (_options) {
 
@@ -250,22 +256,30 @@ class RedisJwt {
                 if (_options.ttl)
                     _ttl = _options.ttl;
 
-                // If have request save agent and ip
-                if (_options.request) {
-                    Object.assign(session, {
-                        _agent: _options.request.headers['user-agent'],
-                        _ip: _options.request.headers['x-forwarded-for'] || _options.request.connection.remoteAddress
-                    });
-                }
+                if (_options.data) {
+                    // If have request save agent and ip                   
+                    if ('request' in _options.data) {
+                        Object.assign(session, {
+                            request: {
+                                agent: _options.data.request.headers['user-agent'],
+                                ip: _options.data.request.headers['x-forwarded-for'] || _options.data.request.connection.remoteAddress
+                            }
+                        });
+                    }
 
-                // If have data save in session
-                if (_options.data)
-                    Object.assign(session, _options.data);
+                    // If have data save in redis
+                    if ('redis' in _options.data)
+                        Object.assign(session, { redis: _options.data.redis });
+
+                    // If have data save in token
+                    if ('token' in _options.data)
+                        dataToken = _options.data.token;
+                }
 
             }
 
             // Sign Jwt
-            let token = await this.j.sign(key);
+            let token = await this.j.sign(key, dataToken);
 
             // Stringify info session
             let data = JSON.stringify(session);
@@ -283,7 +297,7 @@ class RedisJwt {
 
     // Verify
 
-    async verify(token, getValue) {
+    async verify(token, valueRedis) {
 
         try {
             // Verify Token with Jwt
@@ -308,9 +322,15 @@ class RedisJwt {
             Object.assign(decode, { id, ttl });
 
             // if full get value from redis
-            if (getValue) {
-                let value = JSON.parse(await this.d.getValueByKey(key));
-                Object.assign(decode, { value });
+            if (valueRedis) {
+                let data = JSON.parse(await this.d.getValueByKey(key));
+                delete data._key;
+
+                if (decode.data) {
+                    Object.assign(decode.data, data);
+                } else if(data.redis || data.request) {
+                    Object.assign(decode, { data });
+                }
             }
 
             return decode;
