@@ -65,11 +65,11 @@ const app = express();
 // Login
 app.get('/login', (req, res) => {
 	r.sign('507f191e810c19729de860ea', {
-    	ttl: '15 minutes',
-    	data: {
-			redis: {hello: 'world'},
-			token: {world: 'hello'},
-    		request: req
+        ttl: '15 minutes',
+        data: {
+            redis: {hello: 'world'},
+            token: {world: 'hello'},
+            request: req
 		},
     }).then(token => {
 		res.json({token});
@@ -78,7 +78,7 @@ app.get('/login', (req, res) => {
 
 // Me
 app.get('/me', mw(), (req, res) => {
-	res.json(req.user);
+    res.json(req.user);
 });
 
 // Middleware
@@ -90,7 +90,7 @@ function mw() {
 	    req.user = rjwt;
         next();
   	}).catch(err => {
-  		res.status(401).json({err})
+        res.status(401).json({err})
   	})
   }
 }
@@ -105,43 +105,43 @@ app.listen(3000, () => console.log('Server listening on port 3000!'));
 
 ```javascript
 
-	//	Basic
-	r.sign('507f191e810c19729de860ea').then..
+    // Basic
+    r.sign('507f191e810c19729de860ea').then..
 
-    //	TTL : 50 seconds, 15 minutes, 5 hours, 3 days, 1 year ...
+    // TTL : 50 seconds, 15 minutes, 5 hours, 3 days, 1 year ...
     r.sign('507f191e810c19729de860ea', {
     	ttl: '15 minutes'
     }).then...
 
     // Save data in redis : Object are saved in redis-jwt
     r.sign('507f191e810c19729de860ea', {
-    	data: {
-			redis: {hello: 'world'}
-		}
+       data: {
+          redis: {hello: 'world'}
+	   }
     }).then...
 
     // Save data in token : Object are saved in token
     r.sign('507f191e810c19729de860ea', {
-    	data: {
-			token: {world: 'hello'}
-		}
+       data: {
+	      token: {world: 'hello'}
+	   }
     }).then...
 
 	// Request : request are saved in redis-jwt (ip,agent)
     r.sign('507f191e810c19729de860ea', {
-    	data: {
-			request: req
-		}
+        data: {
+          request: req
+	    }
     }).then...
 
     // Example TTL + Data + Request
     r.sign('507f191e810c19729de860ea', {
-    	ttl: '15 minutes',
-    	data: {
-			redis: {hello: 'world'},
-			token: {world: 'hello'},
-    		request: req
-		}
+        ttl: '15 minutes',
+        data: {
+           redis: {hello: 'world'},
+           token: {world: 'hello'},
+           request: req
+        }
     }).then...
 
 ```
@@ -155,6 +155,7 @@ app.listen(3000, () => console.log('Server listening on port 3000!'));
 		/*
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"data": { token: [Object] }
 			"iat": 1504334208,
 			"id": "507f191e810c19729de860ea",
 			"ttl": 60
@@ -164,20 +165,15 @@ app.listen(3000, () => console.log('Server listening on port 3000!'));
 		// Wrong token
   	})
 
-	//	with values (TTL + Data + Request)
+	// Get data from redis
 	r.verify(token, true).then(decode => {
 		/*
 		{
 			"rjwt": "507f191e810c19729de860ea:ZYYlwOGqTmx",
+			"data": { token: [Object], redis: [Object], request: [Object] }
 			"iat": 1504334208,
 			"id": "507f191e810c19729de860ea",
-			"ttl": 60,
-			"value": {
-				"_key": "507f191e810c19729de860ea:ZYYlwOGqTmx",
-				"_agent": "Mozilla/5.0 (X11; Linux x86_64)...",
-				"_ip": "::1",
-				"hello": "world"
-			}
+			"ttl": 60
 		}
 		*/
   	}).catch(err => {
@@ -190,17 +186,17 @@ app.listen(3000, () => console.log('Server listening on port 3000!'));
 
 ```javascript
 
-	// Execute Redis comands
-	const exec = r.exec();
+    // Execute Redis comands
+    const exec = r.exec();
     
-	exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, result) => {
+    exec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, result) => {
 		/*
 		[
 			"507f191e810c19729de860ea:ZYYlwOGqTmx",
 			"507f191e810c19729de860ea:d39K8J249Hd",
 		]
 		*/
-	});
+    });
 
 ```
 
@@ -208,8 +204,8 @@ app.listen(3000, () => console.log('Server listening on port 3000!'));
 
 ```javascript
 
-	// Method's redis-jwt
-	const call = r.call();
+    // Method's redis-jwt
+    const call = r.call();
 
     // Test Ping
     call.ping().then..
