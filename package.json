@@ -1,6 +1,6 @@
 {
     "name": "redis-jwt",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Management of sessions by Redis and JWT for horizontal scalability, with the possibility of having one session at a time or multiple for the same user",
     "main": "dist/index.js",
     "repository": {
@@ -44,7 +44,7 @@
     },
     "dependencies": {
         "chalk": "^2.1.0",
-        "jsonwebtoken": "^7.4.3",
+        "jsonwebtoken": "^8.0.0",
         "ms": "^2.0.0",
         "redis-fast-driver": "^1.0.5",
         "shelljs": "^0.7.8"
