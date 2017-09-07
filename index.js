@@ -39,10 +39,17 @@ var app = express();
 app.get('/', function (req, res) {
 
 	// Create
-	r.sign('507f191e810c19729de860ea', { ttl: '1m', data: { hello: 'world' }, request: req }).then(sign => {
+	r.sign('507f191e810c19729de860ea', {
+		ttl: '1 minutes',
+		data: {
+			redis: { hello: 'world' },
+			token: { world: 'hello' },
+			request: req
+		},
+	}).then(sign => {
 
 		// Verify
-		r.verify(sign, true).then(verify => {
+		r.verify(sign, true).then(decode => {
 
 			// Exec
 			var rexec = r.exec();
@@ -54,8 +61,8 @@ app.get('/', function (req, res) {
 
 				rcall.getValuesByPattern('507f191e810c19729de860ea').then(call => {
 
-					console.log({ sign, verify, exec, call });
-					res.json({ sign, verify, exec, call });
+					console.log({ sign, decode, exec, call });
+					res.json({ sign, decode, exec, call });
 				})
 
 			});
