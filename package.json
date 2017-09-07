@@ -1,6 +1,6 @@
 {
     "name": "redis-jwt",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Management of sessions by Redis and JWT for horizontal scalability, with the possibility of having one session at a time or multiple for the same user",
     "main": "dist/index.js",
     "repository": {

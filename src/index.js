@@ -247,7 +247,7 @@ class RedisJwt {
 
             let key = `${_id}:${this.makeid(11)}`;
             let _ttl = null;
-            let session = { _key: key };
+            let session = { rjwt: key };
             let dataToken = null;
 
             if (_options) {
@@ -324,7 +324,7 @@ class RedisJwt {
             // if full get value from redis
             if (valueRedis) {
                 let data = JSON.parse(await this.d.getValueByKey(key));
-                delete data._key;
+                delete data.rjwt;
 
                 if (decode.data) {
                     Object.assign(decode.data, data);
