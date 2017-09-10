@@ -14,12 +14,12 @@ class Jwt {
     }
 
     // sign token
-    async sign(rjwt, data) {
+    async sign(rjwt, dataToken) {
 
         let value = { rjwt };
 
-        if (data) {
-            Object.assign(value, { data: { token: data } });
+        if (dataToken) {
+            Object.assign(value, { dataToken });
         }
 
         try {
@@ -246,36 +246,22 @@ class RedisJwt {
         try {
 
             let key = `${_id}:${this.makeid(11)}`;
-            let _ttl = null;
+            let ttl = null;
             let session = { rjwt: key };
             let dataToken = null;
 
             if (_options) {
-
                 // If have TTL
                 if (_options.ttl)
-                    _ttl = _options.ttl;
+                    ttl = _options.ttl;
 
-                if (_options.data) {
-                    // If have request save agent and ip                   
-                    if ('request' in _options.data) {
-                        Object.assign(session, {
-                            request: {
-                                agent: _options.data.request.headers['user-agent'],
-                                ip: _options.data.request.headers['x-forwarded-for'] || _options.data.request.connection.remoteAddress
-                            }
-                        });
-                    }
+                // If have data save in redis
+                if (_options.dataSession)
+                    Object.assign(session, { dataSession: _options.dataSession });
 
-                    // If have data save in redis
-                    if ('redis' in _options.data)
-                        Object.assign(session, { redis: _options.data.redis });
-
-                    // If have data save in token
-                    if ('token' in _options.data)
-                        dataToken = _options.data.token;
-                }
-
+                // If have data save in token
+                if (_options.dataToken)
+                    dataToken = _options.dataToken;
             }
 
             // Sign Jwt
@@ -285,7 +271,7 @@ class RedisJwt {
             let data = JSON.stringify(session);
 
             // Set in Redis
-            await this.d.create(key, data, _ttl);
+            await this.d.create(key, data, ttl);
 
             return token;
 
@@ -297,7 +283,7 @@ class RedisJwt {
 
     // Verify
 
-    async verify(token, valueRedis) {
+    async verify(token, valueSession) {
 
         try {
             // Verify Token with Jwt
@@ -322,15 +308,9 @@ class RedisJwt {
             Object.assign(decode, { id, ttl });
 
             // if full get value from redis
-            if (valueRedis) {
-                let data = JSON.parse(await this.d.getValueByKey(key));
-                delete data.rjwt;
-
-                if (decode.data) {
-                    Object.assign(decode.data, data);
-                } else if(data.redis || data.request) {
-                    Object.assign(decode, { data });
-                }
+            if (valueSession) {
+                let value = JSON.parse(await this.d.getValueByKey(key));
+                Object.assign(decode, { dataSession: value.dataSession });
             }
 
             return decode;
