@@ -1,6 +1,7 @@
-var RedisJWT = require('./dist/index');
+import RedisJwt from './dist/index';
+import express from 'express';
 
-var r = new RedisJWT({
+const r = new RedisJwt({
 	//host: '/tmp/redis.sock', //unix domain
 	host: '127.0.0.1', //can be IP or hostname
 	port: 6379, // port
@@ -12,6 +13,7 @@ var r = new RedisJWT({
 	kea: true // Enable notify-keyspace-events KEA
 });
 
+const app = express();
 
 // Events
 
@@ -31,33 +33,29 @@ r.on('error', (err) => {
 	console.log('redis-jwt-> error!', err);
 });
 
+// Router
 
-var express = require('express');
+app.get('/', (req, res) => {
 
-var app = express();
-
-app.get('/', function (req, res) {
-
-	// Create
+	// sign
 	r.sign('507f191e810c19729de860ea', {
 		ttl: '15 minutes',
-		dataToken: { hello: 'world' }, // Public in Token
+		dataToken: { hello: 'world' },
 		dataSession: {
-			// ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
 			hello: 'world',
 			headers: req.headers
 		}
 	}).then(sign => {
 
-		// Verify
+		// verify
 		r.verify(sign, true).then(decode => {
 
-			// Exec
+			// exec
 			var rexec = r.exec();
 
 			rexec.rawCall(['keys', `507f191e810c19729de860ea:*`], (err, exec) => {
 
-				// Call
+				// call
 				var rcall = r.call();
 
 				rcall.getValuesByPattern('507f191e810c19729de860ea').then(call => {
@@ -68,13 +66,9 @@ app.get('/', function (req, res) {
 
 			});
 
-		}).catch(err => {
-			console.log('error verify-> ', err);
-		})
+		}).catch(err => console.log('error verify-> ', err));
 	});
 
 });
 
-app.listen(3000, function () {
-	console.log('Server listening on port 3000!');
-});
+app.listen(3000, () => console.log('Server listening on port 3000!'));
