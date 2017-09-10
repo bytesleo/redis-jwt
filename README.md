@@ -31,7 +31,7 @@ yarn add redis-jwt
 
 ```javascript
 
-import RedisJWT from 'redis-jwt';
+import RedisJwt from 'redis-jwt';
 
 const r = new RedisJwt({
     //host: '/tmp/redis.sock', //unix domain
@@ -59,7 +59,7 @@ r.sign('507f191e810c19729de860ea').then(token => {
 
 ```javascript
 
-import RedisJWT from 'redis-jwt';
+import RedisJwt from 'redis-jwt';
 import express from 'express';
 const r = new RedisJwt();
 const app = express();
@@ -264,13 +264,9 @@ r.on('error', (err) => {
 
 `npm start`
 
-### Serve
+### Compile
 
-`npm run serve`
-
-### Build
-
-`npm run build`
+`npm run compile`
 
 ### Test
 
