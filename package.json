@@ -1,6 +1,6 @@
 {
     "name": "redis-jwt",
-    "version": "1.2.2",
+    "version": "1.3.0",
     "description": "Management of sessions by Redis and JWT for horizontal scalability, with the possibility of having one session at a time or multiple for the same user",
     "main": "dist/index.js",
     "repository": {
@@ -11,7 +11,11 @@
         "start": "nodemon src/index.js --exec babel-node",
         "build": "babel src -d dist",
         "serve": "npm run build && node index.js",
-        "test": "mocha --compilers js:babel-register"
+        "test": "mocha --compilers js:babel-register",
+        "watch": "npm-watch"
+    },
+    "watch": {
+        "test": "{src}/*.js"
     },
     "keywords": [
         "redis-jwt",
@@ -40,7 +44,8 @@
         "babel-preset-stage-2": "^6.24.1",
         "babel-register": "^6.26.0",
         "express": "^4.15.4",
-        "mocha": "^3.5.0"
+        "mocha": "^3.5.0",
+        "npm-watch": "^0.2.0"
     },
     "dependencies": {
         "chalk": "^2.1.0",
