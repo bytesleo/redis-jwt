@@ -40,12 +40,13 @@ app.get('/', function (req, res) {
 
 	// Create
 	r.sign('507f191e810c19729de860ea', {
-		ttl: '1 minutes',
-		data: {
-			redis: { hello: 'world' },
-			token: { world: 'hello' },
-			request: req
-		},
+		ttl: '15 minutes',
+		dataToken: { hello: 'world' }, // Public in Token
+		dataSession: {
+			// ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+			hello: 'world',
+			headers: req.headers
+		}
 	}).then(sign => {
 
 		// Verify
