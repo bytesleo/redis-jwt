@@ -8,14 +8,9 @@
         "url": "git+https://github.com/kevoj/redis-jwt.git"
     },
     "scripts": {
-        "start": "nodemon src/index.js --exec babel-node",
-        "build": "babel src -d dist",
-        "serve": "npm run build && node index.js",
-        "test": "mocha --compilers js:babel-register",
-        "watch": "npm-watch"
-    },
-    "watch": {
-        "test": "{src}/*.js"
+        "start": "npm run compile & nodemon index.js --exec babel-node",
+        "compile": "babel --watch src -d dist",
+        "test": "mocha --compilers js:babel-register"
     },
     "keywords": [
         "redis-jwt",
@@ -44,8 +39,8 @@
         "babel-preset-stage-2": "^6.24.1",
         "babel-register": "^6.26.0",
         "express": "^4.15.4",
-        "mocha": "^3.5.0",
-        "npm-watch": "^0.2.0"
+        "mocha": "^3.5.1",
+        "nodemon": "^1.12.0"
     },
     "dependencies": {
         "chalk": "^2.1.0",
