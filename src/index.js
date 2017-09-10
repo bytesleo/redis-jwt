@@ -309,8 +309,9 @@ class RedisJwt {
 
             // if full get value from redis
             if (valueSession) {
-                let value = JSON.parse(await this.d.getValueByKey(key));
-                Object.assign(decode, { dataSession: value.dataSession });
+                let value = JSON.parse(await this.d.getValueByKey(key));               
+                if (value.dataSession)
+                    Object.assign(decode, { dataSession: value.dataSession });
             }
 
             return decode;
