@@ -39,14 +39,14 @@
         "babel-preset-stage-2": "^6.24.1",
         "babel-register": "^6.26.0",
         "express": "^4.15.4",
-        "mocha": "^3.5.1",
+        "mocha": "^5.0.1",
         "nodemon": "^1.12.0"
     },
     "dependencies": {
         "chalk": "^2.1.0",
         "jsonwebtoken": "^8.0.0",
         "ms": "^2.0.0",
-        "redis-fast-driver": "^1.0.5",
-        "shelljs": "^0.7.8"
+        "redis-fast-driver": "^2.0.0",
+        "shelljs": "^0.8.1"
     }
 }
