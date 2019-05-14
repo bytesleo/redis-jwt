@@ -232,6 +232,8 @@ class RedisJwt {
         this.config.secret = config.secret || 'secret_key';
         this.config.multiple = !config.multiple ? false : true;
 
+        this.config.doNotSetClientName =  !config.doNotSetClientName ? false : true;
+
         // instances
 
         this.d = new Driver(this.config);
